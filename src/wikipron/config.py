@@ -12,6 +12,7 @@ from wikipron.extract import EXTRACTION_FUNCTIONS
 from wikipron.extract.default import extract_word_pron_default
 from wikipron.languagecodes import LANGUAGE_CODES
 from wikipron.typing import ExtractFunc
+from tests.test_wikipron.test_config import variants
 
 # GH-49: Estonian and Slovak use @title = "wikipedia:{language} phonology".
 # GH-50: Korean has an extra "span" layer (for fonts) in //li[span[sup[a.
@@ -206,3 +207,26 @@ class Config:
                 yield self.casefold(word), pron
 
         return extract_word_pron_with_casefolding
+
+        def variants_modes(mode, input_word):
+            if mode == "skip":
+                return ""
+            elif mode == "show":
+                return input_word
+            elif mode == "expand":
+                return variants(input_word)
+        import pytest
+
+        @pytest.mark.parametrize(
+            "mode, input_pron, expected_pron",
+            [
+                ("skip", "ˈɦɔ(t).dɔɡ", ""),
+                ("show", "ˈɦɔ(t).dɔɡ", "ˈɦɔ(t).dɔɡ"),
+                ("expand", "ˈɦɔ(t).dɔɡ", ["ˈɦɔt.dɔɡ","ˈɦɔ.dɔɡ"]),
+                ("skip", "ˈlɪt(ə)l", ""),
+                ("show", "ˈlɪt(ə)l", "ˈlɪt(ə)l"),
+                ("expand", "ˈlɪt(ə)l", ["ˈlɪtə.l", "ˈlɪt.l"])
+            ],
+        )
+        def _test_variants_modes(mode, input_pron, expected_pron):
+            assert variants_modes(mode, input_pron) == expected_pron
